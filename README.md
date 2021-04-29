@@ -11,6 +11,17 @@ Segmentation | code for creating NN model, as well as deprecated models
   The calibration folder contains the code used to automatically calibrate the machine. We have preformed this calibration for the current camera position, however if you make any modifications to the positioning of things on the robot it will likely have to be recalibrated. Offsets for different tools are currently defined in their respective python files. (Trimmer offset is defined in pix2real function in AutoTrim, probe offset is defined in probe.py)
 ## Gantry
   The gantry folder contains the arduino code that is currently uploaded onto the arduino.
+### Controls
+  The most straight forward way to communicate with the gantry is through the arduinos serial monitor. Here you will receive feedback from the gantry, and be able to send it numerous commands.
+
+G-Code Command | Function
+------------ | -------------
+G28 | send gantry to home position
+G00 X100 Y100 Z100 | send gantry to location x:100 y:100 z:100 (values can be changed)
+M03 | start trimmer motor spinning clockwise
+M04 | start trimmer motor spinning counter-clockwise
+M05 | stop trimmer motor from spinning
+
 ## Live Detection
   Live detection is the most important folder. It contains the six python files needed to fully run the machine. A breif description of each file can be found here.
 ### AutoTrim
