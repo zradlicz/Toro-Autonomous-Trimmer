@@ -1,4 +1,8 @@
 # Toro-Autonomous-Trimmer
-# This is an <h1> tag
-## This is an <h2> tag
-###### This is an <h6> tag
+## Folder Layout
+Folder | Contents
+------------ | -------------
+Segmentation | code for creating NN model, as well as deprecated models
+Live Detection | code needed to run the machine
+Gantry | code uploaded onto arduino
+Calibration | code used to calibrate pixel space to gantry space
