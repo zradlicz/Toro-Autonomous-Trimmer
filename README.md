@@ -26,5 +26,6 @@ toolpath contains all the functions that are used to generate and visualize the 
 
 ## Segmentation
 
+![GitHub Logo](/Segmentation/Capture.png)
 
 
