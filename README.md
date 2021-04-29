@@ -10,12 +10,14 @@ Segmentation | code for creating NN model, as well as deprecated models
 ## Calibration
 ## Gantry
 ## Live Detection
-Live detection is the most important folder. It contains the six python files needed to fully run the machine.
-1. Item 1
-1. Item 2
-1. Item 3
-   1. Item 3a
-   1. Item 3b
+Live detection is the most important folder. It contains the six python files needed to fully run the machine. A breif description of each file can be found here.
+### AutoTrim
+### arduino
+### aruco
+### camera
+### probe
+### toolpath
+
 ## Segmentation
 
 
