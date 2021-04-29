@@ -13,6 +13,7 @@ Segmentation | code for creating NN model, as well as deprecated models
 Live detection is the most important folder. It contains the six python files needed to fully run the machine. A breif description of each file can be found here.
 ### AutoTrim
 AutoTrim is the 'main' file of the machine. It is the program that you will run in order to control and get feedback from the machine. It draws from all of the files shown below to function properly. Functions that relate to the machine learning process are found in this file. Also, the main logic of the machine is found here.
+![Output](/images/example_output.jpg)
 ### arduino
 arduino is the file that allows python to communicate with the onboard arduino. 
 ### aruco
@@ -26,6 +27,5 @@ toolpath contains all the functions that are used to generate and visualize the 
 
 ## Segmentation
 
-![GitHub Logo](/Segmentation/Capture.PNG)
 
 
