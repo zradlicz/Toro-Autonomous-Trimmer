@@ -36,7 +36,7 @@ import probe as pb  #These are the files we made that AutoTrim needs to run
 
 
 
-def get_prediction(model,img): #get prediction gets the prediction from the tensorflow model defined on line 164
+def get_prediction(model,img): #get prediction gets the prediction from the tensorflow model defined on line 175
     if USE_TF:
         ysize,xsize,_ = img.shape
         base = np.zeros((ysize,xsize))
