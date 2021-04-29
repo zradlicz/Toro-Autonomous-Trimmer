@@ -17,6 +17,21 @@ Live detection is the most important folder. It contains the six python files ne
 AutoTrim is the 'main' file of the machine. It is the program that you will run in order to control and get feedback from the machine. It draws from all of the files shown below to function properly. Functions that relate to the machine learning process are found in this file. Also, the main logic of the machine is found here.
 ![Output](/images/example_output.JPG)
 This image is an example of the output you should get from running AutoTrim. From top left: RGB image, Depth image, shape difference, prediction, thresholded prediction, depth prediciton.
+
+Key | Function
+------------ | -------------
+T | run the trimmer functionality
+P | run the probe functinoality
+Click | make the gantry go to the location you clicked
+Y | increase exposure
+U | decrease exposure
+I | increase white balance
+O | decrease white balance
+K | increase gain
+L | decrease gain
+Q | quit and close all windows
+ESC | quit and close all windows
+
 ### arduino
 arduino is the file that allows python to communicate with the onboard arduino. 
 ### aruco
