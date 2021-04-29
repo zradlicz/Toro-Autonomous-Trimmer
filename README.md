@@ -23,8 +23,12 @@ aruco is a file that contains a lot of the functions used for calibration as men
 camera contains all of the start up functions for the Intel RealSense camera. This includes depth alignment, resolution settings, bag file recordings and more.
 ### probe
 probe contains the functions used to run the probe and get feedback from it, as well as functions to get gantry space information from depth maps.
+
 ![Probe Toolpath](/images/probe_toolpath.JPG)
+This image shows the data collected from the probe overlayed onto the shape of the segmented shape.
 ![Probe Analysis](/images/probe_analyzed.JPG)
+This image shows the edge detection working on the probe data.
+
 ### toolpath
 toolpath contains all the functions that are used to generate and visualize the trimmer toolpath.
 ![Trimmer Toolpath](/images/toolpath.JPG)
