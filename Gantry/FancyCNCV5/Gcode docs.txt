@@ -1,0 +1,18 @@
+V5
+
+G00 and G01: Linearly interpolate fron current position to set position
+
+G28: home. NOTE: homing is done at max speed, so any commands after homing will also take place at max speed if speed is not explicitly set
+
+M03: turn on rotor in the "forward" direction
+Pin LPWM is set to 0, RPWM is set to give PWM signal corresponding to RotorSpeed
+
+M04: turn on rotor in the "backward" direction
+
+M05: motor off
+
+S<int>: Sets motor speed as a PWM pulse, range from 0-255
+
+F<int>: Sets feedrate (aka. movement speed) per axis. If moving at non-constant speed is allowed, this sets the max speed. Range from 0 to 50 mm/sec, and values above 50 if you disable some of the arduino code.
+
+?: if you send a question mark, the arduino should reply with "waiting\n" if it is waiting for a new gcode command.

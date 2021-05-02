@@ -1,0 +1,37 @@
+V4
+
+serial read flow:
+1. create variables of x,y,z,r with default values of where the robot currently is
+2. read characters from serial in until newline
+3. sets x,y,z,r according to what was fed in
+4. calls runG(x,y,z,r); NOTE: Gfunc is not passed in, it just uses the value set in the outer scope
+
+
+G00: Rapid positioning, moves to set position at MaxSpeed, not always a straight line
+
+G01: Linearly interpolate fron current position to set position
+
+G02: CW circular interpolation
+Set point is the center of the circle
+1. moves distance r on y-axis at MaxSpeed
+2. linearly interpolates from one point on the circle to the next in increments of 1 degree
+3. moves back to center of circle at MaxSpeed
+
+G03: CCW circular interpolation
+
+G28: home. NOTE: homing is done at max speed, so any commands after homing will also take place at max speed if speed is not explicitly set
+
+
+
+M00: does nothing????
+
+M30: also does nothing????
+
+M02: does nothing........
+
+M03: turn on rotor in the "forward" direction
+Pin LPWM is set to 0, RPWM is set to give PWM signal corresponding to RotorSpeed
+
+M04: turn on rotor in the "backward" direction
+
+M05: motor off
