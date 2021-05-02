@@ -1,11 +1,25 @@
 void updateTrimmer() {
-  trimmerState.moving = go();
+  trimmerState.moving = stepTrimmer();
 
-  if(trimmerState.recording && millis() - trimmerState.lastRecord > 500) {
+  // update probe data if recording
+  if(trimmerState.recording && millis() - trimmerState.lastRecord > 1000/SAMP_FREQ) {
     recordPosition(dataIndex);
-    data[dataIndex] = 23;
+    recordData(dataIndex);
     trimmerState.lastRecord = millis();
     dataIndex++;
+  }
+
+  // this is code for the custom-defined G30
+  // a hard-coded value is used instead of 1000/SAMP_FREQ because a high sampling rate
+  // is required to precisely position the probe
+  if(trimmerState.watchingProbe && millis() - trimmerState.lastRecord > 5) {
+    if(abs(trimmerState.initialProbe - readDataResult()) > G30_THRESHOLD) {
+      setTargetStop();
+      trimmerState.watchingProbe = false;
+      trimmerState.moving = false;
+      vl.readRangeResult();
+    }
+    trimmerState.lastRecord = millis();
   }
 
   if(!trimmerState.moving && !gcodeBuffer.empty()) {
@@ -35,6 +49,14 @@ void executeGcode() {
       case 28:
         goHome(1,1,1);
         break;
+      case 30:
+        trimmerState.initialProbe = readData();
+        trimmerState.watchingProbe = true;
+        trimmerState.lastRecord = 0;
+        setTargetSpeed(gcodeBuffer.getCoord('X'),
+                       gcodeBuffer.getCoord('Y'),
+                       0);
+        vl.startRange();
       }
       break;
 
@@ -84,14 +106,17 @@ void executeGcode() {
         trimmerState.recording = false;
         Serial.print(F("N points collected: "));
         Serial.println(dataIndex);
-        Serial.println(positions[dataIndex-1][0]);
-        Serial.println(data[dataIndex-1]);
+        for(int i = 0; i < dataIndex; i++) {
+          printData(i);
+        }
+        vl.readRangeResult();
         break;
       case 01:
-        dataIndex = 0; // note no break; statement here
+        dataIndex = 0; // note no break statement here
       case 02:
         trimmerState.recording = true;
         trimmerState.lastRecord = 0;
+        vl.startRange();
         break;
       }
       break;
@@ -112,7 +137,8 @@ void executeGcode() {
   }
 }
 
-bool go() {
+// this used to be called go()
+bool stepTrimmer() {
   bool moved = false;
   if(XStep.distanceToGo() != 0) {
     XStep.runSpeed(); moved = true;
@@ -144,6 +170,8 @@ float clamp(float val, float min_val, float max_val) {
   return val;
 }
 
+// unused; equivalent to setTargetSpeed without the speed calculation, could be used
+// for fast but non-linear movement
 void setTargetAbs(float x, float y, float z) {
   x = clamp(x,0,XMAX);
   y = clamp(y,0,YMAX);
@@ -160,6 +188,7 @@ void setTargetAbs(float x, float y, float z) {
   ZStep.moveTo((long)(z * SPMMZ));
 }
 
+// unused; should guarantee linear movement, but doesn't allow feed rate control.
 void setTargetSteppers(float x, float y, float z) {
   x = clamp(x,0,XMAX);
   y = clamp(y,0,YMAX);
@@ -175,6 +204,9 @@ void setTargetSteppers(float x, float y, float z) {
   steppers.moveTo(temp);
 }
 
+// sets a new target position and sets the speeds on each stepper so the steppers 
+// should simultaneously reach their target positions. This actually doesn't work 
+// perfectly for some linear movements over a long distance.
 void setTargetSpeed(float x, float y, float z) {
   float Dx, Dy, Dz, Dtot;
   
@@ -205,6 +237,17 @@ void setTargetSpeed(float x, float y, float z) {
   ZStep.setSpeed(floor((Dz / Dtot)*MaxSpeed));
 }
 
+// immediately stops the trimmer from moving
+void setTargetStop() {
+  float xCur = ((float) XStep.currentPosition())/SPMM; //unit in mm
+  float yCur = ((float) YStep.currentPosition())/SPMM; //unit in mm
+  float zCur = ((float) ZStep.currentPosition())/SPMMZ; //unit in mm
+  
+  XStep.moveTo((long)(xCur * SPMM));
+  YStep.moveTo((long)(yCur * SPMM));
+  ZStep.moveTo((long)(zCur * SPMMZ));
+}
+
 // NOTE: speed initializes to 1
 void setAllSpeed(float speed) {
   if(speed < MaxSpeed) {
@@ -231,11 +274,13 @@ void setAllAccel(float accel) {
   }
 }
 
+// NOTE: the trimmer position after running this function is ALWAYS set to (0,0,ZHOME)
+// even if not all axes are homed.
 void goHome(bool homeX,bool homeY,bool homeZ){
   Serial.println(F("Homing"));
-  bool x = !homeX; //!digitalRead(XLIMSWITCH);
-  bool y = !homeY; //!digitalRead(YLIMSWITCH);
-  bool z = !homeZ; //!digitalRead(ZLIMSWITCH);
+  bool x = !homeX; // true if the axis is already at home/does not need to be homed
+  bool y = !homeY;
+  bool z = !homeZ;
   XStep.setSpeed(-MaxSpeed);
   YStep.setSpeed(-MaxSpeed);
   ZStep.setSpeed(MaxSpeed);
@@ -249,6 +294,7 @@ void goHome(bool homeX,bool homeY,bool homeZ){
       printPosition();
       break;
     }
+    // the nested if-statement checks are just to make homing a subset of the axes work
     if(!x){
       x = !digitalRead(XLIMSWITCH);
       if(!x){
@@ -289,4 +335,55 @@ void recordPosition(int index) {
   positions[index][0] = COORDMUL*((float) XStep.currentPosition())/SPMM; //unit in mm
   positions[index][1] = COORDMUL*((float) YStep.currentPosition())/SPMM; //unit in mm
   positions[index][2] = COORDMUL*((float) ZStep.currentPosition())/SPMMZ; //unit in mm
+}
+
+void recordData(int index) {
+  uint8_t range = vl.readRangeResult();
+  uint8_t status = vl.readRangeStatus();
+
+  if (status == VL6180X_ERROR_NONE) {
+    data[index] = range;
+  } else {
+    data[index] = -1;
+  }
+
+  vl.startRange();
+}
+
+// reads one point of data without any prior setup needed, but is slow
+uint8_t readData() {  
+  uint8_t range = vl.readRange();
+  uint8_t status = vl.readRangeStatus();
+
+  if (status == VL6180X_ERROR_NONE) {
+    return range;
+  } else {
+    return -1;
+  }
+}
+
+// assumes that vl.startRange() has already been called before, and calls
+// vl.startRange() again after reading the data. Runs faster than readData()
+uint8_t readDataResult() {  
+  uint8_t range = vl.readRangeResult();
+  uint8_t status = vl.readRangeStatus();
+
+  vl.startRange();
+
+  if (status == VL6180X_ERROR_NONE) {
+    return range;
+  } else {
+    return -1;
+  }
+}
+
+void printData(int index) {
+  Serial.print("data:");
+  Serial.print(positions[index][0] / COORDMUL);
+  Serial.print(",");
+  Serial.print(positions[index][1] / COORDMUL);
+  Serial.print(",");
+  Serial.print(positions[index][2] / COORDMUL);
+  Serial.print(",");
+  Serial.println(data[index]);
 }

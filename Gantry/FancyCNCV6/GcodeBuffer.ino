@@ -1,3 +1,8 @@
+// The class definition is located in FancyCNCV6
+// This class implements a ring buffer of gcode_t structs
+// all setXXX functions are for the head node and getXXX are for the tail node
+
+// init function
 GcodeBuffer::GcodeBuffer() {
   head = 0;
   tail = 0;
@@ -15,6 +20,9 @@ void GcodeBuffer::setFunc(byte fu) {
   gcode[head].func = fu;
 }
 
+// ASCII characters are actually numbered in ascending order, so 
+// 'Z'-'X' = 2 for example
+// downside is that this doesn't work when lower and uppercase are mixed
 void GcodeBuffer::setCoord(char axis, float val) {
   gcode[head].coord[axis-'X'] = val * COORDMUL;
 }
@@ -69,10 +77,12 @@ gcode_t* GcodeBuffer::peek() {
   return &gcode[tail];
 }
 
+// returns true if buffer is empty
 bool GcodeBuffer::empty() {
   return head==tail;
 }
 
+// returns true if buffer is full, maybe should just be count >= GCODE_BUFFSIZE?
 bool GcodeBuffer::full() {
   return count >= GCODE_BUFFSIZE - 2;
 }

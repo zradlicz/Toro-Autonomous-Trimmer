@@ -4,6 +4,8 @@ G00 and G01: Linearly interpolate fron current position to set position
 
 G28: home.
 
+G30: move downward in z-axis until probe is in direct contact with the ground
+
 M03: turn on rotor in the "forward" direction
 Pin LPWM is set to 0, RPWM is set to give PWM signal corresponding to RotorSpeed
 
@@ -18,9 +20,9 @@ F<int>: Sets feedrate (aka. movement speed) per axis. If moving at non-constant 
 NOTE: Rxx commands don't really work yet.
 R00: Stop recording data.
 
-R01: Reset data buffer.
+R01: Restart recording data. (both resets index to 0 and starts recording)
 
-R02: Start recording data.
+R02: Continue recording data.
 
 NOTE: all print commands happen AFTER all previous gcode received has finished executing. Sending P00 while it is moving will not give you the gantry position at the time the command was sent.
 P00: Print the gantry's current position.
@@ -29,4 +31,4 @@ P01: Print "report\n"
 
 P<int>: for integers not already given a specific print statement, prints back the integer as "<int>\n"
 
-????: sending any unrecognized string should prompt the arduino should reply with "waiting\n" if it is waiting for a new gcode command. sending just "?" doesn't do anything special.
+????: sending any unrecognized string should prompt the arduino to reply with "waiting\n" if it is waiting for a new gcode command. sending just "?" doesn't do anything special.

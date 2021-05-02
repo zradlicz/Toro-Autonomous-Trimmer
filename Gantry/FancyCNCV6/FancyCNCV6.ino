@@ -1,12 +1,35 @@
+/* 
+ *  Fancy CNC V6
+ *  
+ *  Second version made by Spring 2021 team.
+ *  
+ *  Main differences from V5:
+ *  
+ *  A buffer for storing gcode from the computer was added to try and prevent
+ *  stuttering that occurs when many points that are close together are sent at once.
+ *  
+ *  Refactored gcode parsing and gcode execution into their own functions.
+ *  
+ *  Implemented setTargetSpeed so that we can have both linear movement and feed rate
+ *  control.
+ *  
+ *  Added recording from probe. 
+ */
+
 // Enables Serial print statements that would not be needed for regular operation
-#define DEBUGG
+//#define DEBUGG
 // Disables enough stepper calls so that the code can be run on any Arduino without
 // any steppers attached.
 //#define NOTRIMMER
 
-//This code is not finished. A lot of it is still a framework.
 #include <AccelStepper.h>
 #include <MultiStepper.h>
+
+#include <Wire.h>
+#include "Adafruit_VL6180X.h"
+
+Adafruit_VL6180X vl = Adafruit_VL6180X();
+
 
 //XYZ Stepper drivers
 #define STEPXP 22
@@ -52,14 +75,14 @@
 //#define R_EN 4
 //#define L_EN 5
 
-/*  used to convert float into int to save memory:
+/*  used to convert float into int to save memory, for example:
  *  float x = 23.534; // 4 bytes
  *  int y = x * COORDMUL; // 2 bytes
  *  float x_back = y / COORDMUL; // 4 bytes
  *  
  *  precision is reduced to 1/COORDMUL as a result
  *  max and min values are reduced to INT_MAX/COORDMUL
- *  for COORDMUL = 50, 32767/50 = 655
+ *  for COORDMUL = 50, max value = 32767/50 = 655
  */
 #define COORDMUL 50.0
 
@@ -70,7 +93,12 @@
 #define GCODE_MAXCHARS 64
 
 // max number of data points to save
-#define DATA_BUFFSIZE 50
+#define DATA_BUFFSIZE 400
+// probe sampling freqency in Hz
+#define SAMP_FREQ 20
+
+// when performing G30, stop moving once the probe readout has changed by this amount
+#define G30_THRESHOLD 10
 
 int RotorSpeed = 255;
 float MaxSpeed = 2000; //Steps per Second
@@ -143,6 +171,8 @@ struct TrimmerState {
   bool moving = false;
   bool recording = false;
   unsigned long lastRecord;
+  bool watchingProbe = false;
+  uint8_t initialProbe;
 } trimmerState;
 
 void setup() {
@@ -169,6 +199,13 @@ void setup() {
   Serial.println(F("Trimmer Arduino startup"));
   Serial.setTimeout(0);
 
+  Serial.println("Adafruit VL6180x test!");
+  if (!vl.begin()) {
+    Serial.println("Failed to find sensor");
+    while (1);
+  }
+  Serial.println("Sensor found!");
+
   #ifndef NOTRIMMER
   goHome(1,1,1);
   #endif
@@ -177,8 +214,14 @@ void setup() {
 }
 
 void loop() {
+  #ifdef DEBUGG
   mainTimer.start();
+  #endif
+  
   updateSerial();
   updateTrimmer();
+  
+  #ifdef DEBUGG
   mainTimer.stop();
+  #endif
 }

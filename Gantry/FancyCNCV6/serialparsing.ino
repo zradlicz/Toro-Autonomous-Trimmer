@@ -1,18 +1,22 @@
 void updateSerial() {
+  // Serial input buffer
   static char serInput[GCODE_MAXCHARS + 1] = "";
+  // This is number of chars in Serial input buffer, not GcodeBuffer
   static size_t numInBuffer = 0;
-  static bool noWaiting = false;
+  // This is set true when "waiting" has been printed to Serial output to prompt
+  // computer for more gcode
+  static bool waitingWritten = true;
   char* newline;
   
   numInBuffer += Serial.readBytes(serInput + numInBuffer, GCODE_MAXCHARS - numInBuffer);
   serInput[numInBuffer] = '\0';
 
-  if(noWaiting 
-     && !gcodeBuffer.full() 
-     && Serial.available() < GCODE_MAXCHARS - numInBuffer) {
+  if(!waitingWritten 
+   && !gcodeBuffer.full() 
+   && Serial.available() < GCODE_MAXCHARS - numInBuffer) {
       Serial.println("waiting");
-      noWaiting = false;
-    }
+      waitingWritten = true;
+  }
   
   newline = strchr(serInput, '\n');
   if(newline != NULL) {
@@ -27,13 +31,12 @@ void updateSerial() {
     if(!gcodeBuffer.full() && Serial.available() < GCODE_MAXCHARS - numInBuffer) {
       Serial.println("waiting");
     } else {
-      noWaiting = true;
+      waitingWritten = false;
     }
     while(newline != NULL) {
       parseLineToGcode(serInput, newline);
       newline = strchr(serInput, '\n');
     }
-    
     numInBuffer = strlen(serInput);
   } else if(numInBuffer == GCODE_MAXCHARS) {
     Serial.println(F("serial buffer filled but no newline, clearing buffer"));
@@ -42,7 +45,8 @@ void updateSerial() {
   }
 }
 
-/* turns this:
+/* In addition to parsing gcode, it also duplicates any characters not parsed to the
+ * beginning of the string, e.g. it turns this:
  * one two three\nfour five\0
  * ^str         ^strEnd
  * into this:
