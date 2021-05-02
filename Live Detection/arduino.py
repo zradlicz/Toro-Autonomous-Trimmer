@@ -3,6 +3,13 @@
 Created on Tue Mar  9 13:45:00 2021
 
 @author: Alan
+
+This file contains code for communicating with an Arduino running version 5 or 6
+of the FancyCNC code written for our trimmer. Examples of how to use this code
+can be found in the __main__ block at the end of this file.
+
+NOTE: you may need to call start_connection a few times if it doesn't reliably
+connect on the first try.
 """
 
 import serial as sr
@@ -14,6 +21,9 @@ from collections import deque
 # pyserial version before 3.0
 assert float(sr.__version__) >= 3
 
+# this is the simple version which blocks until the gcode gets set to the Arduino
+# this is also missing some features the Noblock version has
+# make sure to call start_connection() at some point before sending gcode
 class TrimmerArduino(sr.Serial):
     waiting = False
     
@@ -58,7 +68,10 @@ class TrimmerArduino(sr.Serial):
         self.write_gcode("G28")
 
 
-
+# this is the simple version which keeps gcode in a queue and tries to send the
+# stored gcode every time update() is called
+# make sure to call start_connection() at some point before sending gcode, and
+# put update() in a loop
 class TrimmerArduinoNoblock(sr.Serial):
     waiting = False
     state_flag = ''
@@ -138,6 +151,9 @@ class TrimmerArduinoNoblock(sr.Serial):
         self.write_gcode("G28")
 
 
+# dummy class which acts like TrimmerArduinoNoblock but without a real connection
+# to the Arduino. Any TrimmerArduinoNoblock can be directly replaced with TAtest
+# for debugging purposes.
 class TAtest(TrimmerArduinoNoblock):
     is_open = True
     
@@ -214,25 +230,32 @@ if __name__ == "__main__":
     
     import matplotlib.pyplot as plt
     
+    def movingaverage (values, window): # modified function from stackoverflow
+        extended_values = np.concatenate([values,values[:window-1]])
+        weights = np.repeat(1.0, window)/window
+        sma = np.convolve(extended_values, weights, 'valid')
+        return sma
+    
     with TrimmerArduinoNoblock('COM7',115200,1) as ta:
         ta.start_connection()
+        ta.write_gcode("G00",Z=108)
         ta.home()
         ta.write_gcode("G00",X=200,Y=200,Z=100)
-        ta.write_gcode("G00",X=200,Z=75)
+        ta.write_gcode("G00",X=200,Z=60)
         ta.write_gcode("R01")
         ta.write_gcode("G00",X=350)
         ta.write_gcode("R00")
         ta.write_gcode("P01")
-        ta.write_gcode("G00",Z=108)
         
         while True:
             ta.update()
             if ta.trimmer_flag == 'report':
                 data = np.array(ta.data)
                 plt.figure()
-                plt.plot(data[:,0])
-                plt.plot(data[:,1])
-                plt.plot(data[:,2])
+                plt.plot(data[1:,0])
+                plt.plot(data[1:,1])
+                plt.plot(data[1:,2])
                 plt.figure()
-                plt.plot(data[:,3])
+                plt.plot(data[1:,3],'k.')
+                plt.plot(movingaverage(data[1:,3],10))
                 break
