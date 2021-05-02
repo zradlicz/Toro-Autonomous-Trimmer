@@ -111,8 +111,8 @@ AccelStepper ZStep(AccelStepper::DRIVER, STEPZP, STEPZD);
 MultiStepper steppers;
 
 typedef struct {
-  char letter;
-  byte func;
+  char letter; // the G in G28
+  byte func; // the 28 in G28
   int coord[3];
 }gcode_t;
 
@@ -170,9 +170,9 @@ int dataIndex = 0;
 struct TrimmerState {
   bool moving = false;
   bool recording = false;
-  unsigned long lastRecord;
-  bool watchingProbe = false;
-  uint8_t initialProbe;
+  unsigned long lastRecord; // millisecond timestamp of most recent data point
+  bool watchingProbe = false; // true if trimmer is executing G30
+  uint8_t initialProbe; // reading from probe before executing G30
 } trimmerState;
 
 void setup() {

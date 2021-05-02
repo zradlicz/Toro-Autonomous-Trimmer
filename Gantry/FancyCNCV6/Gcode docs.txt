@@ -17,10 +17,9 @@ S<int>: Sets motor speed as a PWM pulse, range from 0-255
 
 F<int>: Sets feedrate (aka. movement speed) per axis. If moving at non-constant speed is allowed, this sets the max speed. Range from 0 to 50 mm/sec, and values above 50 if you change ABSOLUTEMAXSPEED in the arduino code.
 
-NOTE: Rxx commands don't really work yet.
 R00: Stop recording data.
 
-R01: Restart recording data. (both resets index to 0 and starts recording)
+R01: Restart recording data. (starts recording from 0)
 
 R02: Continue recording data.
 
