@@ -17,12 +17,12 @@ Segmentation | code for creating NN model, as well as deprecated models
 G-Code Command | Function
 ------------ | -------------
 G28 | send gantry to home position
-G00 X<int> Y<int> Z<int> | send gantry to location x:<int> y:<int> z:<int> (x and y range: 0-500, z range 0-108)
+G00 X*int* Y<*int* Z*int* | send gantry to location x:*int* y:*int* z:<*int* (x and y range: 0-500, z range 0-108)
 M03 | start trimmer motor spinning clockwise
 M04 | start trimmer motor spinning counter-clockwise
 M05 | stop trimmer motor from spinning
-S<int> | set motor speed as PWM pulse (0-255)
-F<int> | set feedrate of lead screws (0-50 mm/sec)
+S*int* | set motor speed as PWM pulse (0-255)
+F*int* | set feedrate of lead screws (0-50 mm/sec)
 R00 | stop recording probe data
 R01 | reset recording
 R02 | start recording probe data
