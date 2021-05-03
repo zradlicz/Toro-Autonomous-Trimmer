@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 import scipy as sc
 import numpy.fft
 
-import AutoTrimV3 as ls
+import AutoTrim as ls
 import toolpath as tp
 
 t = np.load('t.npy')
