@@ -78,6 +78,6 @@ To use the segmentation code, get familiar with TensorFlow.
 [This link](https://www.robots.ox.ac.uk/~vgg/software/via/via_demo.html) is what was used to creat the masks. Upload your additional images and use the polyline drawing tool to create maks for each image. Then export the .json file using the annotation tab on the top of the website. This json file and a folder of images will be used to generate the masks in maskGen.py
 
 ## Any Questions?
-Text or call 847-385-8545 or email zradlicz@gmail.com
+Text or call 847-385-8545 or email zradlicz@gmail.com, I'd be happy to help.
 
 
