@@ -30,7 +30,7 @@ P01 | print "report\n"
 ???? | any unrecognized string will prompt the arduino to respond with "waiting\n" if it is waiting for a g-code command
 
 ## Live Detection
-  Live detection is the most important folder. It contains the six python files needed to fully run the machine. A breif description of each file can be found here.
+  Live detection is the most important folder. It contains the six python files needed to fully run the machine. AutoTrim is the main file, and the five other files are meant to be imported into AutoTrim, not run on their own. A breif description of each file can be found here.
 ### AutoTrim
   AutoTrim is the 'main' file of the machine. It is the program that you will run in order to control and get feedback from the machine. It draws from all of the files shown below to function properly. Functions that relate to the machine learning process are found in this file. Also, the main logic of the machine is found here.
 ![Output](/images/example_output.JPG)
