@@ -11,12 +11,11 @@ Created on Mon Feb  8 18:13:58 2021
 @author: zradlicz
 """
 
-USE_TF = True #CHNAGE THIS VALUE TO FALSE IF YOU DONT WANT TO USE TENSORFLOW (NO PREDICTION)
-USE_ARDUINO = False  #CHNAGE THIS VALUE TO TRUE IF CONNECTED TO ARDUINO
+USE_TF = True #CHANGE THIS VALUE TO FALSE IF YOU DONT WANT TO USE TENSORFLOW (NO PREDICTION)
+USE_ARDUINO = False  #CHANGE THIS VALUE TO TRUE IF CONNECTED TO ARDUINO
 #DISPSIZE = 700
 #IMG_SIZE = 256
 
-import pyrealsense2 as rs  #Library for Intel RealSense, documentation can be found at https://dev.intelrealsense.com/docs/python2
 import numpy as np
 import cv2
 from matplotlib import pyplot as plt
@@ -27,14 +26,15 @@ if USE_TF:
     import tensorflow as tf
 
 if USE_ARDUINO:
-    import Arduino as ta #ta is for TrimmerArduino
+    import arduino as ta #ta is for TrimmerArduino
 
-import camera as cm
-import aruco as ar
+#These are the files we made that AutoTrim needs to run
+import camera
+from Calibration import aruco_calibration as ar
 import toolpath as tp
-import probe as pb  #These are the files we made that AutoTrim needs to run
+import probe as pb
 
-
+cm = camera.RealsenseCamera(USE_CAMERA = True)
 
 def get_prediction(model,img): #get prediction gets the prediction from the tensorflow model defined on line 175
     if USE_TF:
@@ -104,7 +104,7 @@ def click_and_go(event, x, y, flags, params): #function that allows you to click
   
     # checking for left mouse clicks 
     if event == cv2.EVENT_LBUTTONDOWN: 
-        real_coords = pix2real(x,y,depth_image)
+        real_coords = pix2real(x,y,cm.depth_image)
         #print(x,y)
         print(real_coords) #can print real coords (gantry space) or x,y (pixel space)
        
@@ -113,39 +113,8 @@ def click_and_go(event, x, y, flags, params): #function that allows you to click
 
 
 def pix2real(x,y,depth_image): #converts pixel space to gantry space
-    #the comments in this are left in so you can see what aruco is doing
+    # see Calibration/aruco_calibration.py for details
     val = ar.pixel_to_gantry(y,x,depth_image)
-    
-    #    matrix_coefficients = np.array([[916.05,0,637.569], # for RGB camera
-#                                [0,916.009,363.627],
-#                                [0,0,1]])
-#
-#    
-#    tf_matrix = np.array([[-0.9565677950546827,
-#                          -0.016546617346755377,
-#                          -0.023484550026097402,
-#                          109.2423020685986],
-#                         [0.0033351132754657112,
-#                          -0.9575209468227942,
-#                          -0.004131467301901673,
-#                          290.8339547952038],
-#                         [-0.009016358671417138,
-#                          -0.002414404289663443,
-#                          -0.9436274780342566,
-#                          680.0184037204939],
-#                         [0.0, 0.0, 0.0, 1.0]]
-#                        )
-#    
-#    coord = np.zeros(3)
-#    corner_coord = np.array([y,x])
-#    depths,_  = ar.extract_depth_points(corner_coord[:2][None,:].astype('int32'),depth_image,1)
-#    coord[0],coord[1],_ = ar.pixel2real_camera(corner_coord[0],corner_coord[1],depths[0],matrix_coefficients)
-#    coord[2] = depths[0]
-#    val = apply_transf(tf_matrix,coord)
-#    #val[0] += 98 #x adjust
-#    #val[1] += -35 #y adjust
-#    val[0] += 0
-#    val[1] += 0
     
     ##########################################
     #THESE VALUES ARE CRITICAL
@@ -176,9 +145,6 @@ if __name__ == "__main__": #start of the main loop
     else:
         model = None
     
-    pipeline,align,depth_scale,color_sensor = cm.create_pipeline() #these three lines are where camera.py is used
-    colorizer = rs.colorizer()
-    filters = cm.get_rs_filters()
     time.sleep(3)
     
     # Streaming loop
@@ -186,37 +152,26 @@ if __name__ == "__main__": #start of the main loop
         if USE_ARDUINO:
             Trimmer = ta.TrimmerArduinoNoblock('COM3',115200,1) #See arduino for info about this Trimmer object
             #Trimmer = ta.TrimmerArduino('COM3',115200)
-            Trimmer.start_connection()
-                
-        # print depth frame resolution
-        frames = pipeline.wait_for_frames()
-        print(np.asanyarray(frames.get_depth_frame().get_data()).shape)
-        
-        for x in range(5): # Skip 5 first frames to give the Auto-Exposure time to adjust
-            frames = pipeline.wait_for_frames()
-            
-        expo = color_sensor.get_option(rs.option.exposure) #these will be used for manula adjustments later
-        wb = color_sensor.get_option(rs.option.white_balance)
-        gain = np.log2(color_sensor.get_option(rs.option.gain))
-        
+            Trimmer.start_connection()        
         
         while True:
             
             #Main loop, follow along with flowchart, the match pretty closely
-            color_image,depth_image,color_frame,depth_frame = cm.get_frames(pipeline,align,filters) #get different types of images from camera
-            test = np.copy(color_image)
-            prediction = get_prediction(model,color_image) #use the model to make a predicted mask on the color image
+            cm.get_frames() # update images from camera
+            test = np.copy(cm.color_image)
+            prediction = get_prediction(model,cm.color_image) #use the model to make a predicted mask on the color image
             
             raw_prediction = np.copy(prediction)
             thresh_prediction = threshold(prediction,.2) #threshold the prediction
-            depth_pred = depth_prediction(depth_image,.96) #not needed, probably can be deleted
-            x,r,grad,depth_pred1 = tp.plane_fit(thresh_prediction,depth_pred,depth_image) #plane_fit will be explained in toolpath.py
+            depth_pred = depth_prediction(cm.depth_image,.96) #not needed, probably can be deleted
+            x,r,grad,depth_pred1 = tp.plane_fit(thresh_prediction,depth_pred,cm.depth_image) #plane_fit will be explained in toolpath.py
             
             x,y,cnt,bounding_cnt,box = tp.contours(thresh_prediction) #determines if its a square or a circle, and gets contour of shape and bounding shape
             
             scale_cnt = tp.scale_contour(cnt,bounding_cnt,.6) #smaller version of the contour
             scale_bounding_cnt = tp.scale_contour(bounding_cnt,bounding_cnt,.6) #smaller version of the bounding contour
             
+            color_image = np.copy(cm.color_image)
             color_image,fitted_diff = tp.draw(color_image,x,y,cnt,bounding_cnt) #draw the contours on the image
             color_image,_ = tp.draw(color_image,x,y,scale_cnt,scale_bounding_cnt)
             #color_image = ar.detect_markers(color_image)
@@ -228,11 +183,9 @@ if __name__ == "__main__": #start of the main loop
             
             color_image = cv2.drawContours(color_image,[cntbtwn],0,(150,0,0),3) #draw intermediate shapes
             color_image = cv2.drawContours(color_image,[cntbtwn2],0,(50,0,0),3)
+
             
-            depth_colormap = np.asanyarray(colorizer.colorize(depth_frame).get_data())
-            
-            
-            render(color_image=color_image,fitted_diff=fitted_diff,depth_colormap=depth_colormap,
+            render(color_image=color_image,fitted_diff=fitted_diff,depth_colormap=cm.depth_colormap,
                    raw_prediction=raw_prediction,thresh_prediction=thresh_prediction,depth_prediction=depth_pred1)
             
             centroid = pix2real(x,y,grad)
@@ -243,33 +196,8 @@ if __name__ == "__main__": #start of the main loop
             
             key = cv2.waitKey(1)
             
-            try: #self explanitory, play around with pressing certain keys to change exposure, white balance, and gain
-                if key & 0xFF == ord('y'): 
-                    expo += 300
-                    print("Exposure:",expo)
-                    color_sensor.set_option(rs.option.exposure, expo)
-                if key & 0xFF == ord('u'):
-                    expo -= 300
-                    print("Exposure:",expo)
-                    color_sensor.set_option(rs.option.exposure, expo)
-                if key & 0xFF == ord('i'):
-                    wb += 300
-                    print("White balance:",wb)
-                    color_sensor.set_option(rs.option.white_balance, wb)
-                if key & 0xFF == ord('o'):
-                    wb -= 300
-                    print("White balance:",wb)
-                    color_sensor.set_option(rs.option.white_balance, wb)
-                if key & 0xFF == ord('k'):
-                    gain += 1
-                    print("gain:",2**gain)
-                    color_sensor.set_option(rs.option.gain, 2**gain)
-                if key & 0xFF == ord('l'):
-                    gain -= 1
-                    print("gain:",2**gain)
-                    color_sensor.set_option(rs.option.gain, 2**gain)
-            except:
-                print("ERROR: Invalid camera parameter setting")
+            cm.process_keypress(key,ignore='tp')
+            
             # Press 'p' to print the toolpath to console and send to arduino
             if key & 0xFF == ord('t'):
                 #toolpath1,toolpath_approx1 = tp.generate(scale_cnt,grad)
@@ -331,5 +259,5 @@ if __name__ == "__main__": #start of the main loop
     finally:
         if USE_ARDUINO:
             Trimmer.close()
-        pipeline.stop()
+        cm.stop()
         cv2.destroyAllWindows()
