@@ -127,15 +127,6 @@ def pix2real(x,y,depth_image): #converts pixel space to gantry space
     val[0][2] -= 10 #z adjust
     ###########################################
     return val
-        
-
-def apply_transf(tf_matrix,coord):    #function is deprecated, but left in just in case you want to not use aruco for transformation
-    return ( tf_matrix @ np.array([[coord[0]],
-                                    [coord[1]],
-                                    [coord[2]],
-                                    [1]]      ) )[:3].squeeze()
-    
-    
 
 
 if __name__ == "__main__": #start of the main loop
