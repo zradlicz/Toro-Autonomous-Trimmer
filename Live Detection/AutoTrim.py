@@ -27,7 +27,7 @@ if USE_TF:
     import tensorflow as tf
 
 if USE_ARDUINO:
-    import Arduino as ta #ta is for TrimmerArduino
+    import arduino as ta #ta is for TrimmerArduino
 
 import camera as cm
 import aruco as ar
