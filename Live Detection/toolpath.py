@@ -12,7 +12,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import random
 
 import camera as cm
-import AutoTrimV3 as ls
+import AutoTrim as ls
 
 
 
