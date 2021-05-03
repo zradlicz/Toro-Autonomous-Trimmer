@@ -73,5 +73,9 @@ toolpath contains all the functions that are used to generate and visualize the 
 
 ## Segmentation
 
+To use the segmentation code, get familiar with TensorFlow using Sentdex Youtube channel.
+
+http://github.com - automatic!
+[GitHub](http://github.com)
 
 
