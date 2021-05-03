@@ -75,7 +75,6 @@ toolpath contains all the functions that are used to generate and visualize the 
 
 To use the segmentation code, get familiar with TensorFlow using Sentdex Youtube channel.
 
-http://github.com - automatic!
-[GitHub](http://github.com)
+[This link](https://www.robots.ox.ac.uk/~vgg/software/via/via_demo.html) is what was used to creat the masks. Upload your additional images and use the polyline drawing tool to create maks for each image. Then export the .json file using the annotation tab on the top of the website. This json file and a folder of images will be used to generate the masks in maskGen.py
 
 
