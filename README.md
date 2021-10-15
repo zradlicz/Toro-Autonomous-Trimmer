@@ -37,6 +37,7 @@ P01 | print "report\n"
 ![Flow Diagram](/images/FINAL - software flow diagram.jpg)
 
 ![Output](/images/example_output.JPG)
+![Output](/images/example_output.JPG)
 This image is an example of the output you should get from running AutoTrim. From top left: RGB image, Depth image, shape difference, prediction, thresholded prediction, depth prediciton.
 #### Controls
 Key | Function
