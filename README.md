@@ -36,7 +36,7 @@ P01 | print "report\n"
 
 ![Flow Diagram](/images/FINAL - software flow diagram.jpg)
 
-![Flow Diagram](/images/FINAL - software flow diagram.JPG)
+![Flow Diagram](FINAL - software flow diagram.JPG)
 
 
 ![Output](/images/example_output.JPG)
