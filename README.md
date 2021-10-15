@@ -34,7 +34,9 @@ P01 | print "report\n"
 ### AutoTrim
   AutoTrim is the 'main' file of the machine. It is the program that you will run in order to control and get feedback from the machine. It draws from all of the files shown below to function properly. Functions that relate to the machine learning process are found in this file. Also, the main logic of the machine is found here.
 
-![Flow Diagram](\images\FINAL - software flow diagram.jpg)
+![Flow Diagram](/images/FINAL - software flow diagram.jpg)
+
+![Flow Diagram](/images/FINAL - software flow diagram.JPG)
 
 
 ![Output](/images/example_output.JPG)
